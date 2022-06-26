@@ -52,24 +52,47 @@
 
                     <tbody>
 
+
+                    @foreach($products as $key=>$product)
+                      
                     <tr>
-                        <td>1</td>
-                        <td>T-Shirt <br> Created at : 25-Aug-2020</td>
-                        <td>Quality product in low cost</td>
+                        <td> {{$key+1}} </td>
+                        <td>{{$product->title}}
+                       
+                             <br> Created at : 
+                                <?php
+                                    $created_at = strtotime($product->created_at);
+                                    $now = time();
+                                    $difference_in_seconds = $now - $created_at;
+                                    $difference_in_hours = $difference_in_seconds / 3600;
+                                    echo round($difference_in_hours)." hours ago";
+                                ?>
+                            </td>
                         <td>
+                            {{$product->description}}
+                        </td>
+                        <td>
+                               
                             <dl class="row mb-0" style="height: 80px; overflow: hidden" id="variant">
+                            @foreach($product->productVariantPrices as $product_variant_price)
 
                                 <dt class="col-sm-3 pb-0">
-                                    SM/ Red/ V-Nick
+                                    {{$product_variant_price->productVariantOne->variant}}/{{$product_variant_price->productVariantTwo->variant}}/{{$product_variant_price->productVariantThree ? $product_variant_price->productVariantThree->variant : ''}}
+                                    
                                 </dt>
                                 <dd class="col-sm-9">
                                     <dl class="row mb-0">
-                                        <dt class="col-sm-4 pb-0">Price : {{ number_format(200,2) }}</dt>
-                                        <dd class="col-sm-8 pb-0">InStock : {{ number_format(50,2) }}</dd>
+                                        <dt class="col-sm-4 pb-0">Price : {{ number_format($product_variant_price->price, 2) }}</dt>
+
+                                        <d class="col-sm-8 pb-0">InStock : {{ number_format($product_variant_price->stock, 0) }}</d>
                                     </dl>
                                 </dd>
+                            @endforeach
+
                             </dl>
+
                             <button onclick="$('#variant').toggleClass('h-auto')" class="btn btn-sm btn-link">Show more</button>
+                            <!-- show only two when not clicking show more -->
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
@@ -77,6 +100,11 @@
                             </div>
                         </td>
                     </tr>
+                    @endforeach
+
+                    <!-- //pagination -->
+                    <!-- {{ $products->links("pagination::bootstrap-4") }} -->
+                    <!-- {!! $products->render() !!} -->
 
                     </tbody>
 
@@ -88,11 +116,15 @@
         <div class="card-footer">
             <div class="row justify-content-between">
                 <div class="col-md-6">
-                    <p>Showing 1 to 10 out of 100</p>
+                    <p>showing {{ $products->firstItem() }} to {{ $products->lastItem() }} of {{ $products->total() }} items</p>
                 </div>
                 <div class="col-md-2">
+                {{ $products->links("pagination::bootstrap-4") }}
 
                 </div>
+                  
+
+
             </div>
         </div>
     </div>
