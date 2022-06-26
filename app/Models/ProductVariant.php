@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProductVariant extends Model
 {
-    public function variant(){ 
+    public function variantObj(){ 
         return $this->belongsTo(Variant::class, 'variant_id');
     }
 }

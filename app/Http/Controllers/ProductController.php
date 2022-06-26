@@ -6,6 +6,8 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantPrice;
 use App\Models\Variant;
+use App\Repositories\ProductRepository;
+use App\Repositories\VariantRepository;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -17,16 +19,14 @@ class ProductController extends Controller
      */
     public function index()
     {
- $data=Product::with(['productVariantPrices'=>function($query){
-            $query->with(['productVariantOne','productVariantTwo','productVariantThree']);
-        }])->paginate(5);
-
-
-        // return $results;
-
-
+  
+        $variants=VariantRepository::get_variants_with_group();
+        
+        $products=ProductRepository::filter_products(request()->query());
+ 
         return view('products.index')
-            ->with('products', $data);
+            ->with('products', $products)
+            ->with('variant_option', $variants);
     }
 
     /**
