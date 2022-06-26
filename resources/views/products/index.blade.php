@@ -18,7 +18,7 @@
                 <div class="col-md-2">
                     <select name="variant" id="" class="form-control">
 
-                        <option value="">Select Variant</option>
+                        <option value="" disabled >Select Variant</option>
                         @foreach ($variant_option as $title => $variants)
                             <optgroup label="{{$title}}">
                                 @foreach ($variants as $variant)

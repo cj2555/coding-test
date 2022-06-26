@@ -93,6 +93,7 @@
 
         <button @click="saveProduct" type="submit" class="btn btn-lg btn-primary">Save</button>
         <button type="button" class="btn btn-secondary btn-lg">Cancel</button>
+
     </section>
 </template>
 
@@ -188,6 +189,7 @@ export default {
                 product_variant_prices: this.product_variant_prices
             }
 
+            console.log(product)
 
             axios.post('/product', product).then(response => {
                 console.log(response.data);

@@ -48,8 +48,74 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        // return response()->json($request->all());
+
+
+        $new_product=new Product();
+        $new_product->title=$request->title;
+        $new_product->description=$request->description;
+        $new_product->sku=$request->sku;
+        $new_product->save();
+
+
+        
+        foreach ($request->product_variant as $key1 => $value1) {
+            $variant=$value1['option'];
+            $variant_tags=$value1['tags'];
+            foreach ($variant_tags as $key2 => $value2) {
+                $insert_product_arr[]=[
+                    'product_id'=>$new_product->id,
+                    'variant_id'=>$variant,
+                    'variant'=>strtolower($value2),
+                    'created_at'=>date('Y-m-d H:i:s'),
+                    'updated_at'=>date('Y-m-d H:i:s')
+                ];
+               
+            }
+        }
+
+        ProductVariant::insert($insert_product_arr);
+
+        foreach ($request->product_variant_prices as $key => $value) {
+           $title=$value['title'];
+           $price=$value['price'];
+           $stock=$value['stock'];
+           $title_arr=array_filter(explode('/',$title));
+
+              $product_variant_price[$key]=[
+                'product_id'=>$new_product->id,
+                'price'=>$price,
+                'stock'=>$stock,
+                'created_at'=>date('Y-m-d H:i:s'),
+                'updated_at'=>date('Y-m-d H:i:s')
+              ];
+
+              $colmun_name=[
+                0=>'product_variant_one',
+                1=>'product_variant_two',
+                2=>'product_variant_three',
+              ];
+              
+              for($i=0;$i<=2;$i++){
+                $product_variant_id=ProductVariant::where([
+                  'product_id'=>$new_product->id,
+                  'variant'=>$title_arr[$i]
+                ])->first()->id;
+                // return  [$product_variant_id,$new_product->id,$title_arr[$i]];
+                $product_variant_price[$key][$colmun_name[$i]]=$product_variant_id;
+              }
+
+        }
+        ProductVariantPrice::insert($product_variant_price);    
+
+        return response()->json(array_values($product_variant_price));
 
     }
+
+
+
+
+        // return 'ok';
 
 
     /**
