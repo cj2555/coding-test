@@ -15,7 +15,6 @@ class ProductRepository
         $price_from = isset($filter_options['price_from']) ? $filter_options['price_from'] : null;
         $price_to = isset($filter_options['price_to']) ? $filter_options['price_to'] : null;
         $date = isset($filter_options['date']) ? Carbon::parse($filter_options['date'])->format('Y-m-d') : null;
-        // return $date;
 
         $data=Product::
         when($search, function($query) use ($search){

@@ -41,8 +41,6 @@ class ProductVariantPriceRepository
                   'product_id'=>$product->id,
                   'variant'=>$title_arr[$i]
                 ])->first()->id;
-                // return $product_variant_id;
-                // return [$product_variant_id,$colmun_name[$i]];
                 $product_variant_price[$key][$colmun_name[$i]]=$product_variant_id;
               }
 
