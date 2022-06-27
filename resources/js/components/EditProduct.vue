@@ -32,7 +32,22 @@
                         <div class="form-group">
                             <label for="">Image</label>
                             <input type="file" @change="onFileChange" class="form-control" multiple>
-                            <!-- <img id="imagePrev" width="100" height="100"  /> -->
+                        </div>
+
+                        <!-- for each image show image -->
+                        <div class="form-group">
+                            <div class="row" v-for="(item,index) in images">
+                                <div class="card col-md-3">
+                                    <!-- add delete icon -->
+                                        <button class="btn"
+                                                @click="deleteImage(item.id)"
+                                        ><i class="fa fa-trash"></i></button>
+                                        
+
+                                    <img :src="get_image_url(item.file_path)" width="100" height="100" />
+
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -56,7 +71,7 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-8">
+                           <div class="col-md-8">
                                 <div class="form-group">
                                     <label v-if="product_variant.length != 1" @click="product_variant.splice(index,1); checkVariant"
                                            class="float-right text-primary"
@@ -86,10 +101,12 @@
                                 <tr v-for="variant_price in product_variant_prices">
                                     <td>{{ variant_price.title }}</td>
                                     <td>
-                                        <input type="text" class="form-control" v-model="variant_price.price">
+                                        <input type="text" class="form-control" v-model="variant_price.price"
+                                            @change="variant_data_updated">
                                     </td>
                                     <td>
-                                        <input type="text" class="form-control" v-model="variant_price.stock">
+                                        <input type="text" class="form-control" v-model="variant_price.stock"
+                                            @change="variant_data_updated">
                                     </td>
                                 </tr>
                                 </tbody>
@@ -99,6 +116,8 @@
                 </div>
             </div>
         </div>
+    <!-- {{JSON.stringify(product_variant)}}
+    {{JSON.stringify(product_variant_prices)}} -->
 
         <button @click="saveProduct" type="submit" class="btn btn-lg btn-primary">Save</button>
         <button type="button" class="btn btn-secondary btn-lg">Cancel</button>
@@ -120,22 +139,21 @@ export default {
         variants: {
             type: Array,
             required: true
+        },
+        product: {
+            type: Object,
+            required: true
         }
     },
     data() {
         return {
-            product_name: '',
-            product_sku: '',
-            description: '',
-            images: [],
+            product_name: this.product.title,
+            product_sku: this.product.sku,
+            description: this.product.description,
+            images: this.product.product_images,
             imageFile: '',
-            product_variant: [
-                {
-                    option: this.variants[0].id,
-                    tags: []
-                }
-            ],
-            product_variant_prices: [],
+            product_variant: this.product.product_variants,
+            product_variant_prices: this.product.product_variant_prices,
             dropzoneOptions: {
                 url: 'http://localhost:8000/api/product_image_upload',
                 thumbnailWidth: 150,
@@ -145,7 +163,8 @@ export default {
                 maxFiles: 5,
                 parallelUploads: 5,
             },
-            has_variant: false,
+            has_variant_data_updated: false,
+            has_file_changed: false,
             
         }
     },
@@ -165,21 +184,17 @@ export default {
 
         // check the variant and render all the combination
         checkVariant() {
-            let tags = [];
-            this.product_variant_prices = [];
-            this.product_variant.filter((item) => {
-                tags.push(item.tags);
-            })
+            let tags = this.product_variant.map(el => el.tags)
 
-            this.getCombn(tags).forEach(item => {
-                this.product_variant_prices.push({
-                    title: item,
-                    price: 0,
-                    stock: 0
-                })
+             this.getCombn(tags).forEach(item => {
+                if(!this.product_variant_prices.some(el => el.title == item)){
+                    this.product_variant_prices.push({
+                        title: item,
+                        price: 0,
+                        stock: 0
+                    })
+                }
             })
-
-            this.has_variant = true;
         },
 
         // combination algorithm
@@ -196,29 +211,35 @@ export default {
         },
 
         onFileChange(e) {
-            // this.images = e.target.files[0];
-            // console.log(this.images);
+           
             for (let i = 0; i < e.target.files.length; i++) {
                 this.images.push(e.target.files[i]);
             }
+
+            this.has_file_changed = true;
             console.log(this.images);
             
         },
 
         // store product into database
         saveProduct() {
-          
+
             let product= new FormData();
+            product.append('id', this.product.id);
             product.append('title', this.product_name);
             product.append('sku', this.product_sku);
             product.append('description', this.description);
-            product.append('product_variant', JSON.stringify(this.product_variant));
+            product.append('product_variants', JSON.stringify(this.product_variant));
             product.append('product_variant_prices', JSON.stringify(this.product_variant_prices));
-            product.append('has_variant', this.has_variant);
-
-            for (let i = 0; i < this.images.length; i++) {
+            product.append('has_variant_data_updated', this.has_variant_data_updated);
+            product.append('has_file_changed', this.has_file_changed);
+            
+            if (this.has_file_changed) {
+                 for (let i = 0; i < this.images.length; i++) {
                 product.append('files[' + i + ']', this.images[i]);
 
+            }
+            
             }
 
             let config={
@@ -226,20 +247,47 @@ export default {
                     'Content-Type': 'multipart/form-data'
                 }
             }
-            axios.post('/product', product,config).then(response => {
+            axios.post('/product-update', product,config).then(response => {
                 window.location.href = '/product';
+                
             }).catch(error => {
                 console.log(error);
                 alert(error.response.data.message);
             })
 
             console.log(product);
+        },
+        
+        get_image_url(image) {
+            return `http://localhost:8000/${image}`;
+        },
+        
+        variant_data_updated(){
+            this.has_variant_data_updated = true;
+        },
+
+        deleteImage(image_id) {
+
+            axios.post('/product-image-delete', {
+                id: image_id
+            }).then(response => {
+                this.images = this.images.filter(el => el.id != image_id);
+            }).catch(error => {
+                console.log(error);
+                alert(error.response.data.message);
+            })
+            
+            
         }
+
+
 
 
     },
     mounted() {
         console.log('Component mounted.')
+        // this.checkVariant();
     }
+    
 }
 </script>
